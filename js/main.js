@@ -1,6 +1,67 @@
 (() => {
   'use strict';
 
+  // ================= RENDER STORY =================
+  const story = document.getElementById('story');
+
+  const esc = (s) => String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const partHTML = (part) => {
+    const chapters = part.chapters
+      .map((c) => {
+        const body = c.body
+          .map((line) => `<p>${line}</p>`)
+          .join('');
+        const murmur = c.murmur ? `<p class="murmur">${c.murmur}</p>` : '';
+        const emoji = c.extra?.emoji ? `<div class="pigeon-silhouette">${c.extra.emoji}</div>` : '';
+        return `
+          <section class="chapter" data-bg="${c.bg}">
+            <span class="chapter-num">${c.num}</span>
+            <div class="chapter-inner">
+              <p class="chapter-label">${esc(c.label)}</p>
+              <h2>${c.title.join('<br />')}</h2>
+              <div class="body">${body}${murmur}</div>
+              ${emoji}
+            </div>
+          </section>`;
+      })
+      .join('');
+
+    return `
+      <section class="interlude">
+        <p class="chapter-label">${esc(part.no)}</p>
+        <h2 class="part-title">${esc(part.title)}</h2>
+        <p class="part-sub">${esc(part.sub)}</p>
+      </section>
+      ${chapters}`;
+  };
+
+  const html = `
+    <section class="prologue">
+      <p class="chapter-label">${esc(STORY.prologue.label)}</p>
+      <blockquote class="quote">
+        ${STORY.prologue.quote.join('<br />')}
+      </blockquote>
+    </section>
+    ${STORY.parts.map(partHTML).join('')}
+    <section class="epilogue">
+      <div class="epilogue-inner">
+        <p class="chapter-label">${esc(STORY.epilogue.label)}</p>
+        <h2>${STORY.epilogue.title.join('<br />')}</h2>
+        <div class="body">${STORY.epilogue.body.map((l) => `<p>${l}</p>`).join('')}</div>
+        <p class="signature">${esc(STORY.epilogue.signature)}</p>
+      </div>
+      <footer class="footer">
+        <p>🐦 찌부새는 사랑을 먹고 살 수 있다.</p>
+        <p class="tiny">The end · 날개를 편 곳에서 시작된 이야기</p>
+      </footer>
+    </section>`;
+
+  story.innerHTML = html;
+
+  // ================= FX HELPERS =================
+  const rand = (a, b) => a + Math.random() * (b - a);
+
   // ---- scroll progress bar ----
   const bar = document.getElementById('progressBar');
   const onScrollProgress = () => {
@@ -26,7 +87,7 @@
         } else {
           const span = document.createElement('span');
           span.className = 'w';
-          span.style.setProperty('--d', `${idx * 40}ms`);
+          span.style.setProperty('--d', `${idx * 45}ms`);
           span.textContent = part;
           frag.appendChild(span);
           idx++;
@@ -38,17 +99,20 @@
   document.querySelectorAll('.chapter h2, .epilogue h2').forEach(splitHeading);
 
   // ---- reveal on scroll ----
-  const targets = document.querySelectorAll('.chapter, .prologue, .epilogue');
+  const targets = document.querySelectorAll('.chapter, .prologue, .epilogue, .interlude');
   const apply = (el) => {
     el.classList.add('reveal');
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          e.target.classList.add('is-visible');
-          io.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.2 });
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-visible');
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
     io.observe(el);
   };
   targets.forEach(apply);
@@ -70,8 +134,6 @@
   const fx = document.getElementById('fx');
   const fctx = fx.getContext('2d');
   let W, H, parts = [];
-
-  const rand = (a, b) => a + Math.random() * (b - a);
 
   const resizeFx = () => {
     W = fx.width = innerWidth * devicePixelRatio;
