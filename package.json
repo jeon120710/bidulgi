@@ -1,0 +1,12 @@
+{
+  "name": "bidulgi",
+  "version": "1.0.0",
+  "description": "찌부새와 신우의 사랑 이야기",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
